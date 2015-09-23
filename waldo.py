@@ -147,8 +147,8 @@ _/    _/    _/  _/    _/  _/  _/    _/  _/    _/
   _/  _/        _/_/_/  _/    _/_/_/    _/_/                                                                
 
        Red|Team|Labs <> Top-Hat-Sec
-           Waldo - Version 1.0
-    '''
+           Waldo - Version '''+__version__+'''
+'''
 
 def error_handler(msg):
 
