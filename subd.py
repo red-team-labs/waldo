@@ -6,6 +6,11 @@ import requests
 from socket import gaierror, gethostbyname
 from argparse import ArgumentParser
 
+# Waldo / Version 1.0
+# Red|Team|Labs - Top-Hat-Sec
+# By: R4v3N & s0lst1c3
+
+VRSN = '1.0'
 DEFAULT_WORDLIST = 'list.txt'
 
 LOG_FILE = 'output.txt'
@@ -17,16 +22,17 @@ def f_header():
 
     print '''
 
-                   {__      {_____    
-                   {__      {__   {__ 
-     {____ {__  {__{__      {__    {__
-    {__    {__  {__{__ {__  {__    {__
-      {___ {__  {__{__   {__{__    {__
-        {__{__  {__{__   {__{__   {__ 
-    {__ {__  {__{__{__ {__  {_____                                                         
+  _/          _/            _/        _/           
+ _/          _/    _/_/_/  _/    _/_/_/    _/_/    
+_/    _/    _/  _/    _/  _/  _/    _/  _/    _/   
+ _/  _/  _/    _/    _/  _/  _/    _/  _/    _/    
+  _/  _/        _/_/_/  _/    _/_/_/    _/_/                                                                
 
-
+       Red|Team|Labs <> Top-Hat-Sec
+           Waldo - Version 1.0
     '''
+
+
 
 def error_handler(msg):
 
@@ -117,6 +123,7 @@ def bruteforce_sub(configs):
 
     print '[*] Checking %s' % url
     response = requests.head('http://%s' % url)
+    #https://www.youtube.com/watch?v=3cEQX632D1M
     if response.status_code < 200 or response.status_code >= 400:
         error_handler('Invalid target')
 
