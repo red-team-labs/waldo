@@ -17,8 +17,7 @@ __version__  = '0.1.0'
 # configs 
 MAX_WORKERS  = 4
 
-DEFAULT_SUB_LIST = 'sublist.txt'
-DEFAULT_DIR_LIST = 'dirlist.txt'
+DEFAULT_LIST = 'default.txt'
 
 LOG_FILE  = 'output.txt'
 MODE_DIRS = 'd'
@@ -200,7 +199,7 @@ def set_configs():
     parser.add_argument('-w','--wordlist',
                     dest='wordlist',
                     required=False,
-                    default=None,
+                    default=DEFAULT_LIST,
                     type=str,
                     metavar='<wordlist>',
                     help='Bruteforce useing <wordlist>')
@@ -221,12 +220,6 @@ def set_configs():
                     help='Specify the maximum number of threads to use.')
 
     args = parser.parse_args()
-
-    if args.wordlist is None:
-        if args.mode == MODE_DIRS:
-            args.wordlist = DEFAULT_DIR_LIST
-        else:
-            args.wordlist = DEFAULT_SUB_LIST
 
     return {
         'mode' : args.mode,
