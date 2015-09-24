@@ -24,18 +24,18 @@ Usage
 
 To enumerate subdomains at some-fake-site.example, execute the following:
 
-	python waldo.py -m s -d some-fake-site.example
+	$ python waldo.py -m s -d some-fake-site.example
 
 To enumerate directories at some-fake-site.example, execute the following:
 
-	python waldo.py -m d -d some-fake-site.example
+	$ python waldo.py -m d -d some-fake-site.example
 
 By default, output will be logged to waldo-output.txt. To specify a custom
 output file, use the -l flag:
 
-	python waldo.py -m s -l my-log-file.txt -d some-fake-site.example
+	$ python waldo.py -m s -l my-log-file.txt -d some-fake-site.example
 
 Waldo uses 4 threads by default. To specify a custom threadpool size, use
 the -t flag:
 
-	python waldo.py -m s -d some-fake-site.example -t 15
+	$ python waldo.py -m s -d some-fake-site.example -t 15

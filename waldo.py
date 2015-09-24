@@ -6,13 +6,14 @@
 
 import sys
 import requests
-import signal
 import os
+import re
 
 from socket    import gaierror, gethostbyname
 from argparse  import ArgumentParser
 from Queue     import Queue
 from threading import Thread, Event
+from datetime  import datetime
 
 __version__  = '0.1.2'
 
@@ -87,12 +88,6 @@ class WorkerThread(Thread):
             return -1
     
         return response.status_code
-    
-    def status_ok(status_code):
-        pass
-
-    def get_ip(self, params):
-        pass
 
 class DirThread(WorkerThread):
 
@@ -131,8 +126,8 @@ _/    _/    _/  _/    _/  _/  _/    _/  _/    _/
        Red|Team|Labs <> Top-Hat-Sec
            Waldo - Version '''+__version__+'''
                         
-                    + R4v3N
-                    + s0lst1ce
+                    .: R4v3N
+                    .: s0lst1ce
 '''
 
 def error_handler(msg):
@@ -154,6 +149,11 @@ def run_initial_check(url):
         error_handler('Invalid target')
 
     return ip_addr
+
+def gen_logfile_name(domain):
+
+    now = datetime.now()
+    return now.strftime('{domain}-%Y-%m-%d-%H-%M-%S.log').format(domain=domain)
 
 def parse_args():
 
@@ -178,7 +178,7 @@ def parse_args():
     parser.add_argument('-l','--log-file',
                     dest='log_file',
                     required=False,
-                    default=LOG_FILE,
+                    default=None,
                     type=str,
                     metavar='<log_file>',
                     help='Log results to <log_file>')
@@ -203,7 +203,7 @@ def parse_args():
     return {
         'mode' : args.mode,
         'wordlist' : args.wordlist,
-        'domain' : args.domain,
+        'domain' : re.sub('http[s]?://', '', args.domain).rstrip('/'),
         'max_workers' : args.max_workers,
         'log_file' : args.log_file,
     }
@@ -220,24 +220,21 @@ def set_configs():
         configs['url_builder'] = '%%s.%s' % configs['domain']
         configs['worker_thread'] = SubThread
 
-    # get number of lines in file
+
+    if configs['log_file'] is None:
+        configs['log_file'] = gen_logfile_name(configs['domain'])
+
+    # get number of lines in wordlist file
     configs['file_len'] = sum(1 for line in open(configs['wordlist']))
 
     return configs
 
-in_queue = None
-out_queue = None
-output_thread = None
+
 output_handle = None
-threads = []
 
 def main():
 
-    global in_queue
-    global out_queue
-    global output_thread
     global output_handle
-    global threads
 
     f_header()
 
