@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Waldo / Version 0.1.0
+# Waldo / Version 0.1.2
 # Red|Team|Labs - Top-Hat-Sec
 # By: R4v3N & s0lst1ce
 
@@ -14,7 +14,7 @@ from argparse  import ArgumentParser
 from Queue     import Queue
 from threading import Thread, Event
 
-__version__  = '0.1.0'
+__version__  = '0.1.2'
 
 # configs 
 MAX_WORKERS  = 4
@@ -37,7 +37,8 @@ class OutputThread(Thread):
         while True:
 
             result = self.queue.get()
-            
+                
+
             self.write_result(result['line_number'],
                             result['file_len'],
                             result['status_code'],
@@ -129,6 +130,9 @@ _/    _/    _/  _/    _/  _/  _/    _/  _/    _/
 
        Red|Team|Labs <> Top-Hat-Sec
            Waldo - Version '''+__version__+'''
+                        
+                    + R4v3N
+                    + s0lst1ce
 '''
 
 def error_handler(msg):
@@ -221,7 +225,19 @@ def set_configs():
 
     return configs
 
-if __name__ == '__main__':
+in_queue = None
+out_queue = None
+output_thread = None
+output_handle = None
+threads = []
+
+def main():
+
+    global in_queue
+    global out_queue
+    global output_thread
+    global output_handle
+    global threads
 
     f_header()
 
@@ -266,3 +282,6 @@ if __name__ == '__main__':
         sys.exit(1)
     
     sys.exit(0)
+
+if __name__ == '__main__':
+    main()
