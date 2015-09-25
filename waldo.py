@@ -6,25 +6,24 @@
 
 import sys
 import requests
-import os
 import re
 
-from socket    import gaierror, gethostbyname
-from argparse  import ArgumentParser
-from Queue     import Queue
-from threading import Thread, Event
-from datetime  import datetime
+from socket import gaierror, gethostbyname
+from argparse import ArgumentParser
+from Queue import Queue
+from threading import Thread
+from datetime import datetime
 
-__version__  = '0.1.2'
+__version__ = '0.1.2'
 
 # configs
-MAX_WORKERS  = 4
+MAX_WORKERS = 4
 
 DEFAULT_LIST = 'default.txt'
 
-LOG_FILE  = 'waldo-output.txt'
+LOG_FILE = 'waldo-output.txt'
 MODE_DIRS = 'd'
-MODE_SUB  = 's'
+MODE_SUB = 's'
 
 
 class OutputThread(Thread):
