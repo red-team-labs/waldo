@@ -26,6 +26,7 @@ LOG_FILE = 'waldo-output.txt'
 MODE_DIRS = 'd'
 MODE_SUB = 's'
 
+
 class OutputThread(Thread):
 
     def __init__(self, queue, build_subdomain_map=False):
@@ -59,7 +60,6 @@ class OutputThread(Thread):
 
         output_handle.write('%d %s %s\n' % (status_code, url, ip_addr))
 
-
     def add_to_subdomain_map(self, result):
 
         ip_addr = result['ip_addr']
@@ -70,10 +70,10 @@ class OutputThread(Thread):
             if status_code in subdomain_map[ip_addr]:
                 subdomain_map[ip_addr][status_code].append(url)
             else:
-                subdomain_map[ip_addr][status_code] = [ url ]
+                subdomain_map[ip_addr][status_code] = [url]
         else:
-            subdomain_map[ip_addr] = { status_code : [ url ] }
-        
+            subdomain_map[ip_addr] = {status_code: [url]}
+
 
 class WorkerThread(Thread):
 
@@ -163,13 +163,13 @@ def run_initial_check(url):
     try:
         ip_addr = gethostbyname(url)
     except gaierror:
-        error_handler('Invalid target')
+        error_handler('Invalid target %s' % url)
 
     print '[*] Checking %s' % url
     response = requests.head('http://%s' % url)
     # https://www.youtube.com/watch?v=3cEQX632D1M
     if response.status_code < 200 or response.status_code >= 400:
-        error_handler('Invalid target')
+        error_handler('Invalid target %s' % url)
 
     return ip_addr
 
@@ -178,6 +178,7 @@ def gen_logfile_name(domain):
 
     now = datetime.now()
     return now.strftime('{domain}-%Y-%m-%d-%H-%M-%S.log').format(domain=domain)
+
 
 def parse_args():
 
@@ -237,7 +238,7 @@ def parse_args():
         'domain': re.sub('http[s]?://', '', args.domain).rstrip('/'),
         'max_workers': args.max_workers,
         'log_file': args.log_file,
-        'build_subdomain_map' : args.build_subdomain_map,
+        'build_subdomain_map': args.build_subdomain_map,
     }
 
 
@@ -263,7 +264,8 @@ def set_configs():
 
 
 output_handle = None
-subdomain_map = {} 
+subdomain_map = {}
+
 
 def main():
 
