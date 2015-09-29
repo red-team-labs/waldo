@@ -7,6 +7,7 @@
 import sys
 import requests
 import re
+import json
 
 from socket import gaierror, gethostbyname
 from argparse import ArgumentParser
@@ -25,13 +26,13 @@ LOG_FILE = 'waldo-output.txt'
 MODE_DIRS = 'd'
 MODE_SUB = 's'
 
-
 class OutputThread(Thread):
 
-    def __init__(self, queue):
+    def __init__(self, queue, build_subdomain_map=False):
 
         Thread.__init__(self)
         self.queue = queue
+        self.build_subdomain_map = build_subdomain_map
 
     def run(self):
 
@@ -45,6 +46,10 @@ class OutputThread(Thread):
                               result['url'],
                               result['ip_addr'])
 
+            if self.build_subdomain_map:
+
+                self.add_to_subdomain_map(result)
+
             self.queue.task_done()
 
     def write_result(self, line_number, file_len, status_code, url, ip_addr):
@@ -54,6 +59,21 @@ class OutputThread(Thread):
 
         output_handle.write('%d %s %s\n' % (status_code, url, ip_addr))
 
+
+    def add_to_subdomain_map(self, result):
+
+        ip_addr = result['ip_addr']
+        url = result['url']
+        status_code = '%d' % result['status_code']
+
+        if ip_addr in subdomain_map:
+            if status_code in subdomain_map[ip_addr]:
+                subdomain_map[ip_addr][status_code].append(url)
+            else:
+                subdomain_map[ip_addr][status_code] = [ url ]
+        else:
+            subdomain_map[ip_addr] = { status_code : [ url ] }
+        
 
 class WorkerThread(Thread):
 
@@ -159,7 +179,6 @@ def gen_logfile_name(domain):
     now = datetime.now()
     return now.strftime('{domain}-%Y-%m-%d-%H-%M-%S.log').format(domain=domain)
 
-
 def parse_args():
 
     parser = ArgumentParser()
@@ -195,6 +214,13 @@ def parse_args():
                         metavar='<domain>',
                         help='The target domain')
 
+    parser.add_argument('-b', '--build-subdomain-map',
+                        dest='build_subdomain_map',
+                        action='store_true',
+                        required=False,
+                        default=False,
+                        help='Build a subdomain map')
+
     parser.add_argument('-t', '--threads',
                         dest='max_workers',
                         required=False,
@@ -211,6 +237,7 @@ def parse_args():
         'domain': re.sub('http[s]?://', '', args.domain).rstrip('/'),
         'max_workers': args.max_workers,
         'log_file': args.log_file,
+        'build_subdomain_map' : args.build_subdomain_map,
     }
 
 
@@ -236,7 +263,7 @@ def set_configs():
 
 
 output_handle = None
-
+subdomain_map = {} 
 
 def main():
 
@@ -251,11 +278,12 @@ def main():
 
     output_handle = open(configs['log_file'], 'w')
 
-    threads = []
-    output_thread = OutputThread(out_queue)
+    output_thread = OutputThread(out_queue,
+                        build_subdomain_map=configs['build_subdomain_map'])
     output_thread.daemon = True
     output_thread.start()
 
+    threads = []
     for i in xrange(configs['max_workers']):
         t = configs['worker_thread'](in_queue=in_queue, out_queue=out_queue)
         t.daemon = True
@@ -274,15 +302,15 @@ def main():
                              'domain_ip': configs['domain_ip'],
                              })
             in_queue.join()
-            out_queue.join()
-            output_handle.close()
 
     except KeyboardInterrupt:
+        print '\n[!] Exiting on user interupt.'
 
-        out_queue.join()
-        output_handle.close()
-        sys.exit(1)
+    out_queue.join()
+    output_handle.close()
 
+    if configs['build_subdomain_map']:
+        print json.dumps(subdomain_map, indent=4, sort_keys=True)
     sys.exit(0)
 
 if __name__ == '__main__':
