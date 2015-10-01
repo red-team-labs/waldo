@@ -51,9 +51,12 @@ class OutputThread(Thread):
 
         print "Progress [%d - %d] Response: %d --> Target: %s --> IP: %s" %\
             (line_number, file_len, status_code, url, ip_addr)
-
+        with open("resume.txt", "a") as resfile:
+            resfile.write(str(line_number))
+            resfile.write('\n')
+            resfile.close()
         output_handle.write('%d %s %s\n' % (status_code, url, ip_addr))
-
+        
 
 class WorkerThread(Thread):
 
