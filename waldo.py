@@ -57,7 +57,10 @@ class OutputThread(Thread):
 
         print "Progress [%d - %d] Response: %d --> Target: %s --> IP: %s" %\
             (line_number, file_len, status_code, url, ip_addr)
-
+        with open("resume.txt", "a") as resfile:
+            resfile.write(str(line_number))
+            resfile.write('\n')
+            resfile.close()
         output_handle.write('%d %s %s\n' % (status_code, url, ip_addr))
 
     def add_to_subdomain_map(self, result):
@@ -190,7 +193,8 @@ def parse_args():
                         type=str,
                         metavar='<mode>',
                         choices=['d', 's'],
-                        help='Set mode to "s" for subdomains, "d" for directories.')
+                        help='Set mode to "s" for subdomains, "d" for dire"\
+                        "ctories.')
 
     parser.add_argument('-w', '--wordlist',
                         dest='wordlist',
@@ -281,7 +285,7 @@ def main():
     output_handle = open(configs['log_file'], 'w')
 
     output_thread = OutputThread(out_queue,
-                        build_subdomain_map=configs['build_subdomain_map'])
+                                 build_subdomain_map=configs['build_subdomain_map'])
     output_thread.daemon = True
     output_thread.start()
 
