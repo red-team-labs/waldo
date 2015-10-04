@@ -8,7 +8,6 @@ import sys
 import requests
 import re
 import json
-import curses
 
 from socket import gaierror, gethostbyname
 from argparse import ArgumentParser
