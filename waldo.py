@@ -8,6 +8,7 @@ import sys
 import requests
 import re
 import json
+import curses
 
 from socket import gaierror, gethostbyname
 from argparse import ArgumentParser
@@ -25,7 +26,6 @@ DEFAULT_LIST = 'default.txt'
 LOG_FILE = 'waldo-output.txt'
 MODE_DIRS = 'd'
 MODE_SUB = 's'
-
 
 class OutputThread(Thread):
 
@@ -45,7 +45,8 @@ class OutputThread(Thread):
                               result['file_len'],
                               result['status_code'],
                               result['url'],
-                              result['ip_addr'])
+                              result['ip_addr'],
+                              result['success'])
 
             if self.build_subdomain_map:
 
@@ -53,14 +54,17 @@ class OutputThread(Thread):
 
             self.queue.task_done()
 
-    def write_result(self, line_number, file_len, status_code, url, ip_addr):
+    def write_result(self, line_number, file_len, status_code, url, ip_addr, success):
 
-        print "Progress [%d - %d] Response: %d --> Target: %s --> IP: %s" %\
-            (line_number, file_len, status_code, url, ip_addr)
-        with open("resume.txt", "a") as resfile:
-            resfile.write(str(line_number))
-            resfile.write('\n')
-            resfile.close()
+        sys.stdout.write('\r')
+        if success:
+            print "[ %d ] Target: %s --> IP: %s" %\
+                (status_code, url, ip_addr)
+            
+        sys.stdout.write("Progress [ %d - %d ]" % (line_number, file_len))
+        sys.stdout.flush()
+
+        resume_handle.write('%d\n' % line_number)
         output_handle.write('%d %s %s\n' % (status_code, url, ip_addr))
 
     def add_to_subdomain_map(self, result):
@@ -97,7 +101,12 @@ class WorkerThread(Thread):
             if self.status_ok(params['status_code']):
 
                 params['ip_addr'] = self.get_ip(params)
-                self.out_queue.put(params)
+                params['success'] = True
+            else:
+                params['ip_addr'] = None
+                params['success'] = False
+
+            self.out_queue.put(params)
 
             self.in_queue.task_done()
 
@@ -137,7 +146,7 @@ class SubThread(WorkerThread):
 # auxiliary functions ---------------------------------------------------------
 
 
-def f_header():
+def print_header():
 
     print '''
 
@@ -150,10 +159,19 @@ _/    _/    _/  _/    _/  _/  _/    _/  _/    _/
        Red|Team|Labs <> Top-Hat-Sec
            Waldo - Version '''+__version__+'''
 
-                    .: R4v3N
-                    .: s0lst1ce
 '''
 
+def print_configs(configs):
+
+    print
+    print '[*] Target domain:', configs['domain']
+    print '[*] Target IP:    ', configs['domain_ip']
+    if configs['mode'] == MODE_DIRS:
+        print '[*] Mode:          enumerate directories'
+    else:
+        print '[*] Mode:          enumerate subdomains'
+    print '[*] Wordlist:     ', configs['wordlist']
+    print
 
 def error_handler(msg):
 
@@ -168,11 +186,13 @@ def run_initial_check(url):
     except gaierror:
         error_handler('Invalid target %s' % url)
 
-    print '[*] Checking %s' % url
+    print '[Setup] Checking %s' % url
     response = requests.head('http://%s' % url)
     # https://www.youtube.com/watch?v=3cEQX632D1M
     if response.status_code < 200 or response.status_code >= 400:
         error_handler('Invalid target %s' % url)
+
+    print '[Setup] %s is valid... continuing' % url
 
     return ip_addr
 
@@ -268,21 +288,24 @@ def set_configs():
 
 
 output_handle = None
+resume_handle = None
 subdomain_map = {}
 
 
 def main():
 
     global output_handle
+    global resume_handle
 
-    f_header()
-
+    print_header()
     configs = set_configs()
+    print_configs(configs)
 
     in_queue = Queue(configs['max_workers'] * 2)
     out_queue = Queue()
 
     output_handle = open(configs['log_file'], 'w')
+    resume_handle = open('resume.txt', 'a')
 
     output_thread = OutputThread(out_queue,
                                  build_subdomain_map=configs['build_subdomain_map'])
@@ -296,10 +319,12 @@ def main():
         t.start()
         threads.append(t)
 
+    print_interrupt_message_on_exit = False
     try:
         with open(configs['wordlist']) as input_handle:
 
             for line_number, line in enumerate(input_handle):
+
 
                 in_queue.put({
                              'url': configs['url_builder'] % line.strip(),
@@ -310,10 +335,14 @@ def main():
             in_queue.join()
 
     except KeyboardInterrupt:
-        print '\n[!] Exiting on user interupt.'
+        print_interrupt_message_on_exit = True
 
     out_queue.join()
     output_handle.close()
+    resume_handle.close()
+       
+    if print_interrupt_message_on_exit:
+        print '\n\n[!] Exiting on user interupt.\n'
 
     if configs['build_subdomain_map']:
         print json.dumps(subdomain_map, indent=4, sort_keys=True)
