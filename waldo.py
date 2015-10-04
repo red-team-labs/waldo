@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 
 # Waldo / Version 0.1.2
 # Red|Team|Labs - Top-Hat-Sec
